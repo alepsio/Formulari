@@ -2,9 +2,9 @@ import psycopg2
 
 def get_db_connection():
     return psycopg2.connect(
-        dbname="trasporti",
-        user="postgres",
-        password="postgres",
-        host="localhost",
-        port="5432"
+        host='metro.proxy.rlwy.net',
+        port='40745',
+        dbname='railway',
+        user='postgres',
+        password='KXXfFuNdXhksrAPXyzMahxkfqKOYmVpZ'
     )
