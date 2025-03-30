@@ -1,3 +1,5 @@
+import eventlet
+eventlet.monkey_patch()
 from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 import psycopg2
@@ -5,8 +7,7 @@ from db_config import get_db_connection
 from werkzeug.security import check_password_hash
 from datetime import date, timedelta, datetime
 from flask_socketio import SocketIO, emit, join_room
-import eventlet
-eventlet.monkey_patch()
+
 
 
 
@@ -531,7 +532,8 @@ def logout():
     return redirect('/')
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=8000)
+    socketio.run(app, host='0.0.0.0', port=5000)
+
 
 
 
