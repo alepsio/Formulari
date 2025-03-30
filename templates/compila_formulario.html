@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Compila Formulario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light p-4">
+    <div class="container bg-white p-4 shadow rounded">
+        <h3 class="mb-4">📝 Compilazione Formulario – Cliente: <strong>{{ giro[0] }}</strong></h3>
+
+        <form method="POST" class="row g-3" id="formularioForm">
+
+            <!-- 🔷 PRODUTTORE -->
+            <div class="col-md-12">
+                <label class="form-label">Produttore</label>
+                <select name="produttore" class="form-select" required>
+                    <option value="" disabled selected>-- Seleziona Produttore --</option>
+                    {% for p in produttori %}
+                        <option value="{{ p[0] }}">{{ p[1] }} - {{ p[2] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- 🔶 DESTINATARIO -->
+            <div class="col-md-12">
+                <label class="form-label">Destinatario</label>
+                <select name="destinatario" class="form-select" required>
+                    <option value="" disabled selected>-- Seleziona Destinatario --</option>
+                    {% for d in destinatari %}
+                        <option value="{{ d[0] }}">{{ d[1] }} - {{ d[2] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- 🟢 TRASPORTATORE -->
+            <div class="col-md-12">
+                <label class="form-label">Trasportatore</label>
+                <select name="trasportatore" class="form-select" required>
+                    <option value="" disabled selected>-- Seleziona Trasportatore --</option>
+                    {% for t in trasportatori %}
+                        <option value="{{ t[0] }}">{{ t[1] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- 🔧 DATI TRASPORTO -->
+            <div class="col-md-6">
+                <label class="form-label">Quantità</label>
+                <input name="quantita" type="number" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Codice E.E.R.</label>
+                <input name="codice_eer" class="form-control" required placeholder="es. 20 01 25">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Targa Veicolo</label>
+                <input name="targa" class="form-control" value="{{ autista_targa or '' }}" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Colli/Contenitori</label>
+                <input name="colli" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Nome e Cognome Conducente</label>
+                <input name="conducente" class="form-control" value="{{ autista_nome or '' }}" required>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Data Trasporto</label>
+                <input name="data_trasporto" type="date" class="form-control" required>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Ora Trasporto</label>
+                <input name="ora_trasporto" type="time" class="form-control" required>
+            </div>
+
+            <!-- Unità di misura -->
+            <div class="col-md-6">
+                <label class="form-label">Unità di misura</label>
+                <select name="unita" class="form-select" required>
+                    <option value="kg">kg</option>
+                    <option value="litri">litri</option>
+                </select>
+            </div>
+
+            <!-- ✅ SUBMIT -->
+            <div class="col-md-12 text-end">
+                <button type="submit" class="btn btn-success px-4">✅ Genera PDF</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+            document.getElementById('formularioForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+            
+                const formData = new FormData(this);
+            
+                fetch("", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(res => res.text())
+                .then(html => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Formulario generato!',
+                        text: 'Il PDF è stato creato correttamente.',
+                        confirmButtonText: 'Ok'
+                    }).then(() => {
+                        // Ricarica pagina per aggiornare la dashboard (opzionale)
+                        window.location.href = "/autista";
+                    });
+                })
+                .catch(() => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Errore!',
+                        text: 'Qualcosa è andato storto.',
+                    });
+                });
+            });
+    </script>
+    
+
+
+
+
+</body>
+</html>

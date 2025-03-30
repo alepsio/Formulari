@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-4 bg-light">
+
+<div class="container">
+    <h2 class="mb-4">👨‍💼 Gestione Giri Clienti</h2>
+
+    <div class="d-flex justify-content-end gap-2 mt-2">
+        <a href="/admin/aggiungi_autista" class="btn btn-outline-primary mb-3">➕ Aggiungi nuovo autista</a>
+        <a href="/admin/aggiungi_produttore" class="btn btn-outline-success mb-3">🏭 Aggiungi nuovo produttore</a>
+        <a href="/admin/aggiungi_destinatario" class="btn btn-outline-warning mb-3">📦 Aggiungi Destinatario</a>
+        <a href="/admin/aggiungi_trasportatore" class="btn btn-outline-dark mb-3">🚚 Aggiungi Trasportatore</a>
+        <a href="/logout" class="btn btn-danger">🔒 Logout</a>
+    </div>
+
+    <!-- Form creazione giro -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            ➕ Crea nuovo giro
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="data" class="form-label">Data</label>
+                        <input type="date" name="data" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="produttore" class="form-label">Produttore</label>
+                        <select id="produttore" name="produttore_id" class="form-select" required onchange="autoFillProduttore(this)">
+                            <option value="">-- Seleziona Produttore --</option>
+                            {% for p in produttori %}
+                                <option value="{{ p[0] }}"
+                                        data-nome="{{ p[1] }}"
+                                        data-indirizzo="{{ p[2] }}"
+                                        data-email="{{ p[4] }}">
+                                    {{ p[1] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="assegnato_a" class="form-label">Autista</label>
+                        <select name="assegnato_a" class="form-select" required>
+                            <option value="">-- Seleziona Autista --</option>
+                            {% for autista in autisti %}
+                                <option value="{{ autista[0] }}">{{ autista[1] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Campi precompilati -->
+                    <div class="col-md-4">
+                        <label class="form-label">Nome cliente</label>
+                        <input type="text" id="nome_cliente" class="form-control" placeholder="Nome cliente" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Indirizzo</label>
+                        <input type="text" id="indirizzo_cliente" class="form-control" placeholder="Indirizzo" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Email cliente</label>
+                        <input type="email" id="email_cliente" class="form-control" placeholder="Email cliente" readonly>
+                    </div>
+
+                    <div class="col-md-2 mt-2">
+                        <button class="btn btn-success w-100 mt-4">
+                            💾 Salva Giro
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Filtro per data -->
+        <form method="get" class="mb-3 px-3">
+            <label for="dataFiltro" class="form-label">📅 Filtra per data:</label>
+            <div class="input-group" style="max-width: 250px;">
+                <input type="date" id="dataFiltro" name="data" class="form-control" value="{{ data_filtro or '' }}">
+                <button class="btn btn-outline-secondary" type="submit">🔍 Filtra</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabs Autisti -->
+    <div class="card shadow">
+        <div class="card-header bg-secondary text-white fw-bold">
+            📋 Giri Programmati per Autista
+        </div>
+        <div class="card-body">
+
+            <ul class="nav nav-tabs" id="autistiTabs" role="tablist">
+                {% for autista in autisti %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if loop.first %}active{% endif %}" id="tab-{{ autista[0] }}"
+                                data-bs-toggle="tab" data-bs-target="#autista-{{ autista[0] }}" type="button" role="tab">
+                            👤 {{ autista[1] }}
+                        </button>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <div class="tab-content p-3 border border-top-0 bg-white" id="autistiTabsContent">
+                {% for autista in autisti %}
+                    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="autista-{{ autista[0] }}" role="tabpanel">
+                        <h5 class="mb-3">🗂️ Giri per {{ autista[1] }}</h5>
+
+                        <table class="table table-striped align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Cliente</th>
+                                    <th>Indirizzo</th>
+                                    <th>Formulario</th>
+                                    <th>Compilato alle</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for giro in giri if giro[5] == autista[0] %}
+                                    <tr>
+                                        <td>{{ giro[0] }}</td>
+                                        <td>{{ giro[1] }}</td>
+                                        <td>{{ giro[2] }}</td>
+                                        <td>
+                                            {% if giro[3] %}
+                                                <a href="/{{ giro[3] }}" target="_blank" class="btn btn-outline-primary btn-sm">📄 PDF</a>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">Non compilato</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if giro[4] %}
+                                                <span class="text-success">{{ giro[4] }}</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <form method="POST" action="/admin/elimina_giro" onsubmit="return confirm('Sei sicuro di voler eliminare questo giro?');">
+                                                <input type="hidden" name="giro_id" value="{{ giro[6] }}">
+                                                <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">Nessun giro assegnato</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header bg-dark text-white">
+            📦 Archivi Giornalieri Autisti
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs" id="archiviTabs" role="tablist">
+                {% for autista in autisti %}
+                    <li class="nav-item">
+                        <button class="nav-link {% if loop.first %}active{% endif %}" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#archivi-{{ autista[0] }}">
+                            {{ autista[1] }}
+                        </button>
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="tab-content border mt-3 p-3 bg-light">
+                {% for autista in autisti %}
+                    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
+                         id="archivi-{{ autista[0] }}">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Download</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for arc in archivi if arc[0] == autista[0] %}
+                                <tr>
+                                    <td>{{ arc[1].strftime('%d/%m/%Y') }}</td>
+                                    <td><a href="{{ url_for('download_archivio', filename=arc[2].split('/')[-1]) }}" class="btn btn-outline-primary btn-sm">Scarica ZIP</a></td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="2" class="text-muted text-center">Nessun archivio disponibile</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+
+
+
+
+
+<!-- Script auto-riempimento -->
+<script>
+function autoFillProduttore(select) {
+    const selected = select.options[select.selectedIndex];
+    document.getElementById("nome_cliente").value = selected.dataset.nome || '';
+    document.getElementById("indirizzo_cliente").value = selected.dataset.indirizzo || '';
+    document.getElementById("email_cliente").value = selected.dataset.email || '';
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

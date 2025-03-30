@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Autista</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body {
+            background: #f4f6f9;
+        }
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #ddd;
+            display: inline-block;
+        }
+        .card-stat {
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 15px;
+            width: 4px;
+            height: 100%;
+            background: #007bff;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: -6px;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border: 4px solid #007bff;
+            border-radius: 50%;
+        }
+        .btn-outline-light:hover {
+            background-color: #ffffff33;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <div class="avatar"></div>
+            <div>
+                <h4 class="mb-0">Ciao, <strong>{{ current_user.nome }}!</strong></h4>
+                <small class="text-muted">Ecco i tuoi giri per oggi</small>
+            </div>
+        </div>
+
+        <div>
+            <a href="/logout" class="btn btn-danger"><i class="fas fa-lock"></i> Logout</a>
+        </div>
+    </div>
+
+    <!-- Navigazione giorni -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="?data={{ giorno_prec }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Giorno precedente</a>
+
+        <h5 class="text-center"><i class="fas fa-calendar-day"></i> <strong>{{ data_corrente }}</strong></h5>
+
+        <a href="?data={{ giorno_succ }}" class="btn btn-outline-secondary">Giorno successivo <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <!-- Statistiche Giornata -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card card-stat bg-primary text-center p-3">
+                <div>Totale Giri</div>
+                <h2>{{ giri|length }}</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-stat bg-success text-center p-3">
+                <div>Compilati</div>
+                <h2>{{ giri|selectattr('4')|list|length }}</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-stat bg-danger text-center p-3">
+                <div>Da Compilare</div>
+                <h2>{{ giri|rejectattr('4')|list|length }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Giri -->
+    <div class="card p-4 shadow mb-4">
+        <h5 class="mb-3"><i class="fas fa-truck"></i> Giri Clienti</h5>
+        <div class="timeline">
+            {% for giro in giri %}
+            <div class="timeline-item" data-giro-id="{{ giro[0] }}">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="mb-1"><i class="fas fa-clock"></i> {{ giro[1].strftime('%d/%m/%Y') }}</h6>
+                        <p class="mb-1"><i class="fas fa-user"></i> <strong>{{ giro[2] }}</strong></p>
+                        <p class="mb-0"><i class="fas fa-map-marker-alt"></i> {{ giro[3] }}</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if giro[4] %}
+                            <a href="/{{ giro[4] }}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-pdf"></i> PDF</a>
+                            <button class="btn btn-outline-success btn-sm" disabled><i class="fas fa-paper-plane"></i> Invia</button>
+                        {% else %}
+                            <a href="{{ url_for('compila_formulario', giro_id=giro[0]) }}" class="btn btn-success btn-sm"><i class="fas fa-pencil-alt"></i> Compila</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Sezione pulsanti bottom -->
+    <div class="d-flex justify-content-between">
+        <a href="/impostazioni" class="btn btn-outline-dark"><i class="fas fa-cog"></i> Impostazioni</a>
+        <button class="btn btn-warning" id="btnFineGiornata" type="button">
+            <i class="fas fa-flag-checkered"></i> Fine Giornata
+        </button>        
+    </div>
+</div>
+
+<!-- Socket.IO CDN -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+<script>
+    const socket = io();
+
+    // Unisciti alla stanza personalizzata
+    socket.emit("join", { user_id: "{{ current_user.id }}" });
+
+    // Quando arriva un nuovo giro
+    socket.on("nuovo_giro", (data) => {
+        mostraNotifica("🆕 Nuovo giro aggiunto!");
+
+        // Crea un nuovo blocco timeline in HTML
+        const nuovoGiro = `
+            <div class="timeline-item">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="mb-1"><i class="fas fa-clock"></i> ${formattaData(data.data)}</h6>
+                        <p class="mb-1"><i class="fas fa-user"></i> <strong>${data.cliente}</strong></p>
+                        <p class="mb-0"><i class="fas fa-map-marker-alt"></i> ${data.indirizzo}</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="/autista" class="btn btn-sm btn-outline-info">🔄 Aggiorna</a>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Inserisci in cima alla timeline
+        document.querySelector(".timeline").insertAdjacentHTML("afterbegin", nuovoGiro);
+    });
+
+
+    socket.on("elimina_giro", (data) => {
+        const giroEliminato = document.querySelector(`[data-giro-id="${data.giro_id}"]`);
+        if (giroEliminato) {
+            giroEliminato.remove();
+            mostraNotifica("❌ Un giro è stato rimosso.");
+        }
+    });
+
+
+    // Funzione per formattare la data (YYYY-MM-DD → DD/MM/YYYY)
+    function formattaData(dataStr) {
+        const [y, m, d] = dataStr.split("-");
+        return `${d}/${m}/${y}`;
+    }
+
+    function mostraNotifica(testo) {
+        const toast = document.createElement('div');
+        toast.className = 'toast align-items-center text-bg-success border-0 show position-fixed bottom-0 end-0 m-4';
+        toast.innerHTML = `<div class="d-flex"><div class="toast-body">${testo}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+</script>
+
+<script>
+    document.getElementById("btnFineGiornata").addEventListener("click", function () {
+        fetch('/fine_giornata', {
+            method: 'POST'
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Errore durante la richiesta.');
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === "successo") {
+                mostraNotifica("✅ Archivio generato con successo!", "success");
+            } else if (data.status === "esistente") {
+                mostraNotifica("ℹ️ Hai già generato l'archivio oggi.", "info");
+            } else if (data.status === "incompleti") {
+                mostraNotifica("⚠️ Alcuni formulari non sono ancora stati compilati!", "danger");
+            }
+        })
+        .catch(error => {
+            mostraNotifica("❌ Errore: " + error.message, "danger");
+        });
+    });
+    
+    function mostraNotifica(messaggio, tipo = "success") {
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-bg-${tipo} border-0 show position-fixed bottom-0 end-0 m-4`;
+        toast.style.zIndex = "1060";
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${messaggio}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+</script>
+    
+    
+
+</body>
+</html>
