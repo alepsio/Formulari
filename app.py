@@ -9,10 +9,8 @@ from datetime import date, timedelta, datetime
 from flask_socketio import SocketIO, emit, join_room
 
 
-
-
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 app.secret_key = 'supersecretkey'
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -149,7 +147,6 @@ def admin_dashboard():
                            data_filtro=data_filtro,
                            produttori=produttori,
                            archivi=archivi)
-
 
 
 @app.route('/admin/elimina_giro', methods=['POST'])
@@ -524,6 +521,49 @@ def download_archivio(filename):
         return "Non autorizzato", 403
     return send_from_directory('static/archivi_giornate', filename, as_attachment=True)
 
+@app.route('/api/statistiche_giri')
+@login_required
+def api_statistiche_giri():
+    if current_user.ruolo != 'admin':
+        return jsonify({'error': 'Non autorizzato'}), 403
+
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    if not start or not end:
+        return jsonify({'error': 'Date mancanti'}), 400
+
+    try:
+        data_start = datetime.strptime(start, '%Y-%m-%d').date()
+        data_end = datetime.strptime(end, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Formato data non valido'}), 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Query per conteggio giri per ogni autista
+    cur.execute("""
+        SELECT u.nome, COUNT(*) 
+        FROM giri_clienti g
+        JOIN utenti u ON g.assegnato_a = u.id
+        WHERE g.data BETWEEN %s AND %s
+        GROUP BY u.nome
+        ORDER BY COUNT(*) DESC
+    """, (data_start, data_end))
+
+    risultati = cur.fetchall()
+    conn.close()
+
+    dati = {
+        "labels": [r[0] for r in risultati],
+        "totali": [r[1] for r in risultati]
+    }
+
+    return jsonify(dati)
+
+
+
 
 
 @app.route('/logout')
@@ -532,8 +572,8 @@ def logout():
     return redirect('/')
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000)
-
+    app.debug = True
+    eventlet.wsgi.server(eventlet.listen(('0.0.0.0', 5000)), app)
 
 
 
