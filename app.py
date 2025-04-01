@@ -205,6 +205,8 @@ def autista_dashboard():
                            giorno_prec=giorno_prec,
                            giorno_succ=giorno_succ)
 
+
+
 @app.route('/admin/aggiungi_autista', methods=['GET', 'POST'])
 @login_required
 def aggiungi_autista():
@@ -228,7 +230,7 @@ def aggiungi_autista():
 
         return redirect('/admin')
 
-    return render_template('aggiungi_autista.html')
+    return render_template('dashboard_admin.html')
 
 @app.route('/admin/aggiungi_produttore', methods=['GET', 'POST'])
 @login_required
@@ -254,7 +256,7 @@ def aggiungi_produttore():
 
         return redirect('/admin')
 
-    return render_template('aggiungi_produttore.html')
+    return render_template('dashboard_admin.html')
 
 @app.route('/admin/aggiungi_destinatario', methods=['GET', 'POST'])
 @login_required
@@ -282,7 +284,7 @@ def aggiungi_destinatario():
 
         return redirect('/admin')
 
-    return render_template('aggiungi_destinatario.html')
+    return render_template('dashboard_admin.html')
 
 @app.route('/admin/aggiungi_trasportatore', methods=['GET', 'POST'])
 @login_required
@@ -306,7 +308,7 @@ def aggiungi_trasportatore():
 
         return redirect('/admin')
 
-    return render_template('aggiungi_trasportatore.html')
+    return render_template('dashboard_admin.html')
 
 
 

@@ -283,7 +283,7 @@
     <div class="section-content" id="nuovoAutista">
         <div class="card shadow-sm p-4 bg-light">
             <h4 class="mb-4 text-primary"><i class="fas fa-user-plus"></i> Aggiungi Nuovo Autista</h4>
-            <form method="POST">
+            <form method="POST" action="/admin/aggiungi_autista">
                 <div class="mb-3">
                     <label class="form-label">Nome</label>
                     <input type="text" name="nome" class="form-control" placeholder="Nome autista" required>
@@ -305,7 +305,7 @@
     <div class="section-content" id="nuovoProduttore">
         <div class="card shadow-sm p-4 bg-light">
             <h4 class="mb-4 text-success"><i class="fas fa-industry"></i> Nuovo Produttore</h4>
-            <form method="POST">
+            <form method="POST" action="/admin/aggiungi_produttore">
                 <div class="mb-3"><label class="form-label">Denominazione</label><input type="text" name="denominazione" class="form-control" required></div>
                 <div class="mb-3"><label class="form-label">Indirizzo</label><input type="text" name="indirizzo" class="form-control" required></div>
                 <div class="mb-3"><label class="form-label">Sede Operativa</label><input type="text" name="sede_operativa" class="form-control"></div>
@@ -323,7 +323,7 @@
     <div class="section-content" id="nuovoTrasportatore">
         <div class="card shadow-sm p-4 bg-light">
             <h4 class="mb-4 text-dark"><i class="fas fa-truck-moving"></i> Nuovo Trasportatore</h4>
-            <form method="POST">
+            <form method="POST" action="/admin/aggiungi_trasportatore">
                 <div class="mb-3"><label class="form-label">Denominazione</label><input type="text" name="denominazione" class="form-control" required></div>
                 <div class="mb-3"><label class="form-label">Partita IVA</label><input type="text" name="partita_iva" class="form-control"></div>
                 <div class="mb-3"><label class="form-label">Autorizzazione</label><input type="text" name="autorizzazione" class="form-control"></div>
@@ -339,7 +339,7 @@
     <div class="section-content" id="nuovoDestinatario">
         <div class="card shadow-sm p-4 bg-light">
             <h4 class="mb-4 text-warning"><i class="fas fa-warehouse"></i> Nuovo Destinatario</h4>
-            <form method="POST">
+            <form method="POST" action="/admin/aggiungi_destinatario">
                 <div class="mb-3"><label class="form-label">Denominazione</label><input type="text" name="denominazione" class="form-control" required></div>
                 <div class="mb-3"><label class="form-label">Indirizzo</label><input type="text" name="indirizzo" class="form-control"></div>
                 <div class="mb-3"><label class="form-label">Partita IVA</label><input type="text" name="partita_iva" class="form-control"></div>
